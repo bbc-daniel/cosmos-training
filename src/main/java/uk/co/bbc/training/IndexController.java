@@ -11,7 +11,7 @@ public class IndexController {
 	@RequestMapping(value = "/welcome", method = RequestMethod.GET)
 	@ResponseBody
 	public String index() {
-		return "<h1>Hello World</h1>\n";
+		return "<h1>Goodbye World</h1>\n";
 	}
 
 }
