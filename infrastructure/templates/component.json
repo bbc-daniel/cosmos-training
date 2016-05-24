@@ -11,12 +11,12 @@
         }, 
         "MinSize": {
             "Description": "The minimum number of instances", 
-            "Default": "2", 
+            "Default": "1", 
             "Type": "String"
         }, 
         "MaxSize": {
             "Description": "The maximum number of instances", 
-            "Default": "2", 
+            "Default": "3", 
             "Type": "String"
         }, 
         "InstanceType": {
@@ -91,6 +91,76 @@
     }, 
     "AWSTemplateFormatVersion": "2010-09-09", 
     "Resources": {
+        "UpComponentScalingPolicy": {
+            "Type": "AWS::AutoScaling::ScalingPolicy", 
+            "Properties": {
+                "ScalingAdjustment": "1", 
+                "AutoScalingGroupName": {
+                    "Ref": "ComponentAutoScalingGroup"
+                }, 
+                "AdjustmentType": "ChangeInCapacity"
+            }
+        }, 
+        "DownComponentScalingPolicy": {
+            "Type": "AWS::AutoScaling::ScalingPolicy", 
+            "Properties": {
+                "ScalingAdjustment": "-1", 
+                "AutoScalingGroupName": {
+                    "Ref": "ComponentAutoScalingGroup"
+                }, 
+                "AdjustmentType": "ChangeInCapacity"
+            }
+        }, 
+        "CPUUtilizationScaleUpAlarm": {
+            "Type": "AWS::CloudWatch::Alarm", 
+            "Properties": {
+                "Dimensions": [
+                    {
+                        "Name": "AutoScalingGroupName", 
+                        "Value": {
+                            "Ref": "ComponentAutoScalingGroup"
+                        }
+                    }
+                ], 
+                "Namespace": "AWS/EC2", 
+                "MetricName": "CPUUtilization", 
+                "EvaluationPeriods": 2, 
+                "AlarmActions": [
+                    {
+                        "Ref": "UpComponentScalingPolicy"
+                    }
+                ], 
+                "Period": 60, 
+                "ComparisonOperator": "GreaterThanOrEqualToThreshold", 
+                "Statistic": "Average", 
+                "Threshold": 80
+            }
+        }, 
+        "CPUUtilizationScaleDownAlarm": {
+            "Type": "AWS::CloudWatch::Alarm", 
+            "Properties": {
+                "Dimensions": [
+                    {
+                        "Name": "AutoScalingGroupName", 
+                        "Value": {
+                            "Ref": "ComponentAutoScalingGroup"
+                        }
+                    }
+                ], 
+                "Namespace": "AWS/EC2", 
+                "MetricName": "CPUUtilization", 
+                "EvaluationPeriods": 3, 
+                "AlarmActions": [
+                    {
+                        "Ref": "DownComponentScalingPolicy"
+                    }
+                ], 
+                "Period": 120, 
+                "ComparisonOperator": "LessThanThreshold", 
+                "Statistic": "Average", 
+                "Threshold": 20
+            }
+        }, 
         "LoadBalancerSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup", 
             "Properties": {
@@ -282,7 +352,7 @@
                 "Tags": [
                     {
                         "PropagateAtLaunch": true, 
-                        "Value": "component-name", 
+                        "Value": "rchatley-cosmos-training-2", 
                         "Key": "BBCProject"
                     }, 
                     {
@@ -301,7 +371,7 @@
                                     {
                                         "Ref": "Environment"
                                     }, 
-                                    "component-name"
+                                    "rchatley-cosmos-training-2"
                                 ]
                             ]
                         }, 
@@ -412,7 +482,7 @@
                                             {
                                                 "Ref": "S3BucketArn"
                                             }, 
-                                            "/component-name/", 
+                                            "/rchatley-cosmos-training-2/", 
                                             {
                                                 "Ref": "Environment"
                                             }, 
